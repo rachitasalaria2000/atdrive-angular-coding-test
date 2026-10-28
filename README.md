@@ -33,7 +33,12 @@ npm run build
 npm start
 ```
 
-Open **http://localhost:3002** and choose **Create an account**. There is no preset login; register your own username and password. The optional seed creates four products only when the catalog is empty. `npm run dev` rebuilds the app and starts the same server; restart it after source changes.
+Open **http://localhost:3002**. After `npm run seed`, use this local demo login:
+
+- **Username:** `demo_user`
+- **Password:** `DemoLogin123!`
+
+You can also choose **Create an account** to register your own user. The seed stores a bcrypt password hash in MySQL and creates four products when the catalog is empty. Re-running it keeps existing users/passwords and products unchanged. Demo seeding is disabled when `NODE_ENV=production`; these credentials are for local assessment use only. `npm run dev` rebuilds the app and starts the same server; restart it after source changes.
 
 ## Environment configuration
 
@@ -70,7 +75,7 @@ npm run test:integration
 
 Unit/API tests cover validation, bcrypt, login/logout, product CRUD, order ownership/totals, throttling, service failures, Angular service state, and weather caching/errors. Integration tests require running MongoDB and MySQL and use **only** databases named `atdrive_test`; Docker creates the SQL test database automatically. For a native MySQL setup, create `atdrive_test` and grant the configured user access to it first.
 
-Verified locally: **22 unit/API/service tests, 1 real MongoDB + MySQL integration test, and 4 browser tests passed**. The production build and strict TypeScript checks also passed.
+Verified locally: **23 unit/API/service tests, 1 real MongoDB + MySQL integration test, and 4 browser tests passed**. The production build and strict TypeScript checks also passed.
 
 For browser tests, leave the app running in another terminal:
 
