@@ -1,0 +1,36 @@
+services:
+  mongo:
+    image: mongo:8.0
+    ports: ["127.0.0.1:27028:27017"]
+    volumes: ["mongo_data:/data/db"]
+    healthcheck:
+      test:
+        ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  mysql:
+    image: mysql:8.4
+    ports: ["127.0.0.1:3307:3306"]
+    environment:
+      MYSQL_DATABASE: atdrive
+      MYSQL_USER: atdrive
+      MYSQL_PASSWORD: local_dev_password
+      MYSQL_ROOT_PASSWORD: local_root_password
+    volumes:
+      [
+        "mysql_data:/var/lib/mysql",
+        "./sql/init.sql:/docker-entrypoint-initdb.d/01-test-database.sql:ro",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  mongo_data:
+  mysql_data:
