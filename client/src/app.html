@@ -1,0 +1,597 @@
+@if (!auth.ready()) {
+<div class="boot" role="status">
+  <span class="brand-mark">s</span> Opening your workspace…
+</div>
+} @else if (!auth.user()) {
+<main class="auth-layout">
+  <section class="auth-story">
+    <a class="brand" href="/">
+      <span class="brand-mark">s</span> stockroom<span class="brand-dot"
+        >.</span
+      ></a
+    ><span class="story-label">A LITTLE ORDER GOES A LONG WAY</span>
+    <h1>Good products.<br />Great possibilities.</h1>
+    <p>
+      Your catalog, customers, and orders.<br />One thoughtful place to keep
+      things moving.
+    </p>
+    <div class="story-art" aria-hidden="true">
+      <div class="art-grid"></div>
+      <div class="art-box box-a"><span>STOCKROOM</span><i>↗</i></div>
+      <div class="art-box box-b"><span>HANDLE WITH CARE</span><i>◈</i></div>
+      <div class="art-tag">A workspace that works.</div>
+    </div>
+    <footer>PRODUCTS. PEOPLE. POSSIBILITIES.</footer>
+  </section>
+  <section class="auth-panel">
+    <div class="auth-top">PRODUCT WORKSPACE <span>01 / WELCOME</span></div>
+    <div class="auth-form-wrap">
+      <span class="eyebrow">LET’S GET YOU SET UP</span>
+      <h2>
+        {{ authMode() === 'login' ? 'Welcome back.' : 'Make yourself at home.'
+        }}
+      </h2>
+      <p class="muted">
+        {{ authMode() === 'login' ? 'Sign in to pick up where you left off.' :
+        'Create an account to manage your workspace.' }}
+      </p>
+      <form [formGroup]="authForm" (ngSubmit)="signIn()">
+        <label for="username">Username</label
+        ><input
+          id="username"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="e.g. rachita"
+          maxlength="40"
+        />@if(authForm.controls.username.touched &&
+        authForm.controls.username.invalid){<small class="field-error"
+          >Use 3–40 letters, numbers or underscores; start with a letter.</small
+        >}<label for="password">Password</label
+        ><input
+          id="password"
+          type="password"
+          formControlName="password"
+          [autocomplete]="authMode() === 'login' ? 'current-password' : 'new-password'"
+          placeholder="At least 8 characters"
+        />@if(authForm.controls.password.touched &&
+        authForm.controls.password.invalid){<small class="field-error"
+          >Enter at least 8 characters.</small
+        >}@if(error() || auth.error()){
+        <div class="error" role="alert">{{error() || auth.error()}}</div>
+        }<button class="primary auth-submit" type="submit" [disabled]="busy()">
+          {{busy() ? 'Please wait…' : authMode() === 'login' ? 'Sign in to
+          workspace' : 'Create your account'}} <span>↗</span>
+        </button>
+      </form>
+      <p class="auth-switch">
+        {{authMode() === 'login' ? 'New around here?' : 'Already have an
+        account?'}}
+        <button type="button" (click)="switchAuth()" [disabled]="busy()">
+          {{authMode() === 'login' ? 'Create an account' : 'Sign in'}}
+        </button>
+      </p>
+      <div class="auth-note">
+        <span>⌁</span> Your password is protected with bcrypt hashing.
+      </div>
+    </div>
+    <footer class="auth-footer">
+      STOCKROOM WORKSPACE <span>Built for the everyday.</span>
+    </footer>
+  </section>
+</main>
+} @else {
+<div class="workspace">
+  <aside class="sidebar">
+    <a href="/" class="brand"
+      ><span class="brand-mark">s</span> stockroom<span class="brand-dot"
+        >.</span
+      ></a
+    >
+    <div class="workspace-chip">
+      <span class="workspace-icon">S</span>
+      <div><b>My workspace</b><small>Product management</small></div>
+      <span>⌄</span>
+    </div>
+    <span class="nav-label">WORKSPACE</span>
+    <nav aria-label="Main navigation">
+      <button
+        [class.active]="page() === 'products'"
+        (click)="page.set('products'); search.set('')"
+      >
+        <span>▦</span> Products
+        <small>{{store.products().length}}</small></button
+      ><button
+        [class.active]="page() === 'orders'"
+        (click)="page.set('orders')"
+      >
+        <span>▤</span> Orders <small>{{store.orders().length}}</small>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-note">
+        <span>✳</span>
+        <p>A place for everything.<br />A little room to grow.</p>
+      </div>
+      <div class="profile">
+        <span class="profile-avatar"
+          >{{auth.user()!.username.slice(0,1).toUpperCase()}}</span
+        >
+        <div>
+          <b>{{auth.user()!.username}}</b><small>Workspace member</small>
+        </div>
+        <button
+          aria-label="Sign out"
+          title="Sign out"
+          [disabled]="busy()"
+          (click)="signOut()"
+        >
+          ↪
+        </button>
+      </div>
+    </div>
+  </aside>
+  <div class="workspace-main">
+    <header class="topbar">
+      <span
+        >Workspace <i>/</i>
+        <b>{{page() === 'products' ? 'Products' : 'Orders'}}</b></span
+      ><span class="online"><i></i> All in one place</span
+      ><button
+        class="mobile-signout"
+        aria-label="Sign out"
+        (click)="signOut()"
+        [disabled]="busy()"
+      >
+        Sign out
+      </button>
+    </header>
+    <main class="content">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">YOUR WORKSPACE, IN FOCUS</p>
+          <h1>
+            {{page() === 'products' ? 'The product shelf' : 'Orders,
+            organised'}}<span class="accent-dot">.</span>
+          </h1>
+          <p class="muted">
+            {{page() === 'products' ? 'A home for your catalog. Keep the good
+            things moving.' : 'Keep track of what’s been picked, all in one
+            place.'}}
+          </p>
+        </div>
+        <button
+          class="primary"
+          (click)="page() === 'products' ? openProduct() : openOrder()"
+          [disabled]="store.loading()"
+        >
+          + &nbsp; {{page() === 'products' ? 'Add product' : 'Create order'}}
+        </button>
+      </div>
+      @if(error() && !productModal() && !orderModal() && !confirmDelete()){
+      <div role="alert" class="error">{{error()}}</div>
+      }@if(toast()){
+      <div class="toast" role="status">
+        ✓ &nbsp; {{toast()}}
+        <button aria-label="Dismiss notification" (click)="toast.set('')">
+          ×
+        </button>
+      </div>
+      }
+      <section class="overview">
+        <div class="stat">
+          <span class="stat-icon">▦</span
+          ><span class="stat-label">Products in catalog</span
+          ><strong>{{store.products().length | number:'2.0-0'}}</strong
+          ><small>Ready to discover</small>
+        </div>
+        <div class="stat">
+          <span class="stat-icon peach">▤</span
+          ><span class="stat-label">Your orders</span
+          ><strong>{{store.orders().length | number:'2.0-0'}}</strong
+          ><small
+            >{{orderValue() | currency:'INR':'symbol':'1.2-2'}} total order
+            value</small
+          >
+        </div>
+        <div class="weather">
+          <div class="weather-top">
+            <span>OUTSIDE YOUR WORKSPACE</span
+            ><select
+              aria-label="Weather city"
+              [value]="weather.city()"
+              (change)="changeCity($event)"
+            >
+              <option value="delhi">New Delhi</option>
+              <option value="bengaluru">Bengaluru</option>
+              <option value="london">London</option>
+            </select>
+          </div>
+          @if(weather.loading()){
+          <div role="status" class="weather-loading">Checking the skies…</div>
+          }@else if(weather.data(); as w){
+          <div class="weather-current">
+            <span class="weather-symbol"
+              >{{w.weatherCode === 0 ? '☀' : '☁'}}</span
+            ><strong>{{w.temperature | number:'1.0-1'}}<sup>°C</sup></strong>
+            <div>
+              <b>{{weatherLabel(w.weatherCode)}}</b
+              ><small
+                >Humidity {{w.humidity}}% · Wind {{w.windSpeed}} km/h</small
+              >
+            </div>
+          </div>
+          <div class="weather-footer">
+            <a href="https://open-meteo.com/" target="_blank" rel="noopener"
+              >Open-Meteo</a
+            ><span
+              >{{w.stale ? 'Cached · live update unavailable' : 'Updated'}}
+              {{w.fetchedAt | date:'shortTime'}}</span
+            >
+          </div>
+          }@else{
+          <div class="weather-failed" role="alert">
+            <span>{{weather.error()}}</span
+            ><button (click)="weather.load()">Retry weather</button>
+          </div>
+          }
+        </div>
+      </section>
+      <section class="catalog">
+        <header class="catalog-heading">
+          <div>
+            <h2>
+              {{page() === 'products' ? 'All products' : 'Your orders'}}
+              <span class="count-badge"
+                >{{page() === 'products' ? store.products().length :
+                store.orders().length}}</span
+              >
+            </h2>
+            <p>
+              {{page() === 'products' ? 'The details that make your catalog
+              yours.' : 'Each order is linked to your account.'}}
+            </p>
+          </div>
+          <button
+            class="secondary"
+            (click)="loadWorkspace()"
+            [disabled]="store.loading()"
+          >
+            ↻ &nbsp; Refresh
+          </button>
+        </header>
+        @if(store.loading()){
+        <div class="empty" role="status">
+          <span class="loading-dot"></span> Loading your workspace…
+        </div>
+        }@else if(store.error()){
+        <div class="empty">
+          <p>{{store.error()}}</p>
+          <button class="secondary" (click)="loadWorkspace()">Try again</button>
+        </div>
+        }@else if(page() === 'products'){
+        <div class="catalog-toolbar">
+          <label class="search"
+            ><span>⌕</span
+            ><input
+              aria-label="Search products"
+              placeholder="Search your catalog…"
+              [value]="search()"
+              (input)="changeSearch($event)" /></label
+          ><span class="result-count"
+            >{{filtered().length}} {{filtered().length === 1 ? 'product' :
+            'products'}}</span
+          >
+        </div>
+        @if(filtered().length){
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>PRODUCT</th>
+                <th>DESCRIPTION</th>
+                <th>PRICE</th>
+                <th class="actions-heading">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for(p of filtered();track p.id;let i=$index){
+              <tr>
+                <td>
+                  <div class="product-name">
+                    <span
+                      class="product-tile"
+                      [class.tile-peach]="i % 3 === 1"
+                      [class.tile-lilac]="i % 3 === 2"
+                      >{{p.name.slice(0,1).toUpperCase()}}</span
+                    >
+                    <div>
+                      <b>{{p.name}}</b
+                      ><small>{{p.id.slice(-8).toUpperCase()}}</small>
+                    </div>
+                  </div>
+                </td>
+                <td class="description">
+                  {{p.description || 'No description added'}}
+                </td>
+                <td class="price">
+                  {{p.price | currency:'INR':'symbol':'1.2-2'}}
+                </td>
+                <td class="actions">
+                  <button
+                    class="text-button"
+                    [attr.aria-label]="'Edit '+p.name"
+                    (click)="openProduct(p)"
+                  >
+                    Edit</button
+                  ><button
+                    class="icon-button"
+                    [attr.aria-label]="'Delete '+p.name"
+                    (click)="askDelete(p)"
+                  >
+                    ×
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }@else{
+        <div class="empty">
+          <span class="empty-symbol">▦</span>
+          <h3>{{search() ? 'No products found' : 'Your shelf is ready.'}}</h3>
+          <p>
+            {{search() ? 'Try a different name or description.' : 'Add your
+            first product to get things started.'}}
+          </p>
+          @if(!search()){<button class="secondary" (click)="openProduct()">
+            Add your first product ↗</button
+          >}
+        </div>
+        }
+        <footer class="catalog-footer">
+          <span>YOUR CATALOG, ALWAYS UP TO DATE</span
+          ><span
+            >Catalog value
+            <b>{{catalogValue() | currency:'INR':'symbol':'1.2-2'}}</b></span
+          >
+        </footer>
+        }@else{@if(store.orders().length){
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ORDER</th>
+                <th>PRODUCTS</th>
+                <th>TOTAL</th>
+                <th class="actions-heading">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for(o of store.orders();track o.orderId){
+              <tr>
+                <td>
+                  <b class="order-id"
+                    >#{{o.orderId.toString().padStart(4,'0')}}</b
+                  ><small class="user-id">User {{o.userId}}</small>
+                </td>
+                <td>
+                  <div class="order-products">
+                    @for(id of o.productIds;track
+                    id){<span>{{productName(id)}}</span>}
+                  </div>
+                </td>
+                <td class="price">
+                  {{o.totalAmount | currency:'INR':'symbol':'1.2-2'}}
+                </td>
+                <td class="actions">
+                  <button
+                    class="text-button"
+                    [attr.aria-label]="'Edit order '+o.orderId"
+                    (click)="openOrder(o)"
+                  >
+                    Edit</button
+                  ><button
+                    class="icon-button"
+                    [attr.aria-label]="'Delete order '+o.orderId"
+                    (click)="askDelete(o)"
+                  >
+                    ×
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }@else{
+        <div class="empty">
+          <span class="empty-symbol">▤</span>
+          <h3>Your first order starts here.</h3>
+          <p>Pick products from the catalog and we’ll calculate the total.</p>
+          <button class="secondary" (click)="openOrder()">
+            Create an order ↗
+          </button>
+        </div>
+        }
+        <footer class="catalog-footer">
+          <span>TOTALS CALCULATED FROM CATALOG PRICES</span
+          ><span>{{store.orders().length}} orders</span>
+        </footer>
+        }
+      </section>
+      <footer class="page-footer">
+        <span>stockroom. <i>Less clutter. More clarity.</i></span
+        ><span>PRODUCT WORKSPACE</span>
+      </footer>
+    </main>
+  </div>
+</div>
+} @if(productModal()){
+<div class="modal-backdrop">
+  <section
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="product-dialog-title"
+    (keydown.escape)="closeModals()"
+  >
+    <header>
+      <div>
+        <span class="eyebrow">YOUR PRODUCT CATALOG</span>
+        <h2 id="product-dialog-title">
+          {{editingProduct() ? 'Edit product' : 'Add a product'}}
+        </h2>
+      </div>
+      <button
+        class="icon-button"
+        aria-label="Close product form"
+        [disabled]="busy()"
+        (click)="closeModals()"
+      >
+        ×
+      </button>
+    </header>
+    <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
+      <label for="product-name">Product name</label
+      ><input
+        id="product-name"
+        formControlName="name"
+        placeholder="Give it a name"
+        maxlength="120"
+      />@if(productForm.controls.name.touched &&
+      productForm.controls.name.invalid){<small class="field-error"
+        >A product name is required (maximum 120 characters).</small
+      >}<label for="product-price">Price (INR)</label
+      ><input
+        id="product-price"
+        type="number"
+        min="0"
+        max="1000000"
+        step="0.01"
+        formControlName="price"
+      />@if(productForm.controls.price.touched &&
+      productForm.controls.price.invalid){<small class="field-error"
+        >Enter a price from 0 to 1,000,000.</small
+      >}<label for="product-description"
+        >Description <span class="optional">optional</span></label
+      ><textarea
+        id="product-description"
+        formControlName="description"
+        maxlength="2000"
+        rows="3"
+        placeholder="A few details about this product"
+      ></textarea
+      >@if(error()){
+      <div class="error" role="alert">{{error()}}</div>
+      }
+      <footer>
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="busy()"
+          (click)="closeModals()"
+        >
+          Cancel</button
+        ><button class="primary" type="submit" [disabled]="busy()">
+          {{busy() ? 'Saving…' : editingProduct() ? 'Save changes' : 'Add
+          product'}}
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>
+} @if(orderModal()){
+<div class="modal-backdrop">
+  <section
+    class="modal order-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="order-dialog-title"
+    (keydown.escape)="closeModals()"
+  >
+    <header>
+      <div>
+        <span class="eyebrow">BUILD YOUR ORDER</span>
+        <h2 id="order-dialog-title">
+          {{editingOrder() ? 'Edit order #'+editingOrder()!.orderId : 'Create an
+          order'}}
+        </h2>
+      </div>
+      <button
+        class="icon-button"
+        aria-label="Close order form"
+        [disabled]="busy()"
+        (click)="closeModals()"
+      >
+        ×
+      </button>
+    </header>
+    <p class="muted">
+      Select products. Each selected product is included once.
+    </p>
+    <div class="product-picker">
+      @for(p of store.products();track p.id){<label class="picker-row"
+        ><input
+          type="checkbox"
+          [checked]="selected().has(p.id)"
+          (change)="toggleProduct(p.id)"
+          [disabled]="busy()"
+        /><span>{{p.name}}</span
+        ><b>{{p.price | currency:'INR':'symbol':'1.2-2'}}</b></label
+      >}@empty{
+      <p class="muted">
+        Add a product to your catalog before creating an order.
+      </p>
+      }
+    </div>
+    <div class="order-total">
+      <span>{{selected().size}} products selected</span
+      ><strong>{{previewTotal() | currency:'INR':'symbol':'1.2-2'}}</strong>
+    </div>
+    <small class="muted"
+      >The server confirms the total using current catalog prices.</small
+    >@if(error()){
+    <div class="error" role="alert">{{error()}}</div>
+    }
+    <footer>
+      <button class="secondary" [disabled]="busy()" (click)="closeModals()">
+        Cancel</button
+      ><button
+        class="primary"
+        [disabled]="busy() || !selected().size"
+        (click)="saveOrder()"
+      >
+        {{busy() ? 'Saving…' : editingOrder() ? 'Save order' : 'Create order'}}
+      </button>
+    </footer>
+  </section>
+</div>
+} @if(confirmDelete()){
+<div class="modal-backdrop">
+  <section
+    class="modal delete-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-dialog-title"
+  >
+    <span class="delete-symbol">×</span>
+    <h2 id="delete-dialog-title">Delete {{deleteLabel()}}?</h2>
+    <p class="muted">This removes the item from your workspace.</p>
+    @if(error()){
+    <div class="error" role="alert">{{error()}}</div>
+    }
+    <footer>
+      <button class="secondary" [disabled]="busy()" (click)="closeModals()">
+        Cancel</button
+      ><button
+        class="danger-button"
+        [disabled]="busy()"
+        (click)="deleteConfirmed()"
+      >
+        {{busy() ? 'Deleting…' : 'Delete permanently'}}
+      </button>
+    </footer>
+  </section>
+</div>
+}
